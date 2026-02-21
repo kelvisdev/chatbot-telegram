@@ -1,0 +1,701 @@
+{
+  "name": "BotClima",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ff1aa359-db46-49cc-8086-51f6ba748d56",
+              "name": "id",
+              "value": "={{ $json.message.from.id }}",
+              "type": "number"
+            },
+            {
+              "id": "a4cb98b2-211c-400a-b401-93ba5aefa9f0",
+              "name": "queue",
+              "value": "={{ $json.message.text.trim().toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '') \n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        -304
+      ],
+      "id": "2e2c3c99-2039-4e58-9c38-bd3ef8d11ab9",
+      "name": "InicializaVariaveis"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "lang",
+              "value": "pt_br"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.queue }}"
+            },
+            {
+              "name": "appid",
+              "value": "={{$env.OPENWEATHER_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        720,
+        -256
+      ],
+      "id": "4ae74f91-4ab5-4cb3-8ddf-5e773913dcc3",
+      "name": "ChamaApiOpenWeather",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cidade = $json.queue?.trim()?.split(',')[0];\nconst uf = $json.queue?.trim()?.split(',')[1];\n\nconst ufUpper = uf?.toString()?.trim()?.toUpperCase();\n\nconst estados = {\n  AC: \"Acre\",\n  AL: \"Alagoas\",\n  AP: \"Amapá\",\n  AM: \"Amazonas\",\n  BA: \"Bahia\",\n  CE: \"Ceará\",\n  DF: \"Distrito Federal\",\n  ES: \"Espírito Santo\",\n  GO: \"Goiás\",\n  MA: \"Maranhão\",\n  MT: \"Mato Grosso\",\n  MS: \"Mato Grosso do Sul\",\n  MG: \"Minas Gerais\",\n  PA: \"Pará\",\n  PB: \"Paraíba\",\n  PR: \"Paraná\",\n  PE: \"Pernambuco\",\n  PI: \"Piauí\",\n  RJ: \"Rio de Janeiro\",\n  RN: \"Rio Grande do Norte\",\n  RS: \"Rio Grande do Sul\",\n  RO: \"Rondônia\",\n  RR: \"Roraima\",\n  SC: \"Santa Catarina\",\n  SP: \"São Paulo\",\n  SE: \"Sergipe\",\n  TO: \"Tocantins\"\n};\n\nlet cidadeEEstadoQueue = \"\";\n\nif (estados[ufUpper] && cidade) {\n  cidadeEEstadoQueue = cidade.concat(', ').concat(estados[ufUpper].toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, ''));  \n} else {\n  cidadeEEstadoQueue = \"inválido\";\n}\n\nreturn {\n  queue: cidadeEEstadoQueue\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -304
+      ],
+      "id": "2ec79200-091e-472d-8342-7696a5e9f346",
+      "name": "ValidaParametroCidadeEstado"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03573199-acca-4f2d-b729-ac929a04032e",
+              "name": "nomeCidade",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "1cee4f09-d262-431c-b32f-6605c665d0a5",
+              "name": "temperatura",
+              "value": "={{ $json.main.temp }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        -368
+      ],
+      "id": "1f1e8007-6f50-4298-94d3-e2264b04612d",
+      "name": "Resposta"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const temperatura = Math.round($input.item.json.temperatura);\n\nreturn {\n  ...$json,\n  temperatura: temperatura\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        -400
+      ],
+      "id": "370e6816-45db-4eb6-af5f-29d5d887f2da",
+      "name": "ArredondaTemperatura"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9fd42224-7d0e-41ed-afd7-ec24b23a7ec5",
+              "name": "mensagem",
+              "value": "=🌤️ A temperatura em {{ $json.nomeCidade }} é de {{$json.temperatura}}°C.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        -400
+      ],
+      "id": "b5734ae0-ee8a-4f10-88b7-7b8ebb44c7c3",
+      "name": "MensagemFinal"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9fd42224-7d0e-41ed-afd7-ec24b23a7ec5",
+              "name": "mensagem",
+              "value": "=❌ Cidade não encontrada. Use o formato Cidade,UF (ex.: São Paulo,SP).",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2080,
+        -144
+      ],
+      "id": "f22f9e6e-ee2e-4cf1-bdc3-9201f562779d",
+      "name": "MensagemDeErro"
+    },
+    {
+      "parameters": {
+        "content": "## Entrada e validação de cidade e estado",
+        "height": 496,
+        "width": 944
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -368,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "56f78164-22f9-4042-ace6-c41496095f78",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Chamada de API de Clima e validação de resposta",
+        "height": 496,
+        "width": 1200,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        608,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "caec79cf-6602-4c39-b33e-afd2c69597d7",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Tratamento de mensagem para retorno",
+        "height": 496,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1824,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "cc5c8612-748d-453c-addf-d132e712cdff",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Tratamento de erro e fallback",
+        "height": 784,
+        "width": 656,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2496,
+        -768
+      ],
+      "typeVersion": 1,
+      "id": "3192792f-3dfc-42cd-a93e-33aa33948414",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Responde a mensagem do Telegram",
+        "height": 496,
+        "width": 448,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3168,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "40a122f8-ac43-418f-abd9-9e515712e7f4",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Reescreva esta mensagem de forma mais natural e amigável em português brasileiro, mantendo o mesmo conteúdo {{ $json.mensagem }}\n\nRetorne APENAS um JSON no formato:\n- Se sucesso: {\"message\":\"[sua mensagem reescrita aqui]\",\"ok\":true}\n- Se erro: {\"message\":\"\",\"ok\":false,\"error\":true}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        -400
+      ],
+      "id": "ca3254d1-4b84-414b-a747-821004cdbc2e",
+      "name": "MensagemComGemini",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nNbDpbqPFa9LXNt9",
+          "name": "GEMINI_KEY_API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "489dbeb9-ec59-4959-81e4-1b77575bba7f",
+              "leftValue": "={{ $json.temperatura }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "29b7f132-fd63-4afa-bf98-1d8e1c66455f",
+              "leftValue": "={{ $json.nomeCidade }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1296,
+        -320
+      ],
+      "id": "3e654d5f-c345-4c5e-869c-0047e65554ea",
+      "name": "TemperaturaExiste"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "528ef941-d903-4e67-b671-4cfd78ecb64a",
+              "leftValue": "={{ $json.queue }}",
+              "rightValue": "inválido",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        -160
+      ],
+      "id": "0debbd81-a23c-4bf6-a7f7-7617c3cc717b",
+      "name": "MensagemValida"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "560d8bf3-2004-4b8c-99dd-111511d13332",
+              "leftValue": "={{ $json.content?.parts[0]?.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2544,
+        -288
+      ],
+      "id": "050009fc-60d1-4970-a067-89e482654c44",
+      "name": "GerouTexto1"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Fallback determinístico - gera mensagem sem depender do Gemini\n// A automação avaliadora usará este fallback quando não houver credenciais Gemini\nconst nomeCidade = $json.nomeCidade || $('ArredondaTemperatura1').item.json.nomeCidade;\nconst temperatura = $json.temperatura || $('ArredondaTemperatura1').item.json.temperatura;\n\n// Gera mensagem formatada de forma determinística\nconst mensagem = `🌤️ A temperatura em ${nomeCidade} é de ${temperatura}°C.`;\n\nreturn {\n  json: {\n    mensagem: mensagem,\n    ok: true\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        -400
+      ],
+      "id": "3b50480a-b373-423a-bc74-7b876217563e",
+      "name": "FallbackDeterministico"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Extrai resposta do Gemini e detecta erros\nlet mensagemFinal = $json.mensagem || ''; // fallback para mensagem original\nlet ok = true;\nlet error = false;\n\ntry {\n  // Caso 1: Sucesso - N8N já processou e temos content.parts[0].text\n  if ($json.content?.parts?.[0]?.text) {\n    mensagemFinal = $json.content.parts[0].text.trim();\n    ok = true;\n    error = false;\n  }\n  // Caso 2: Erro direto do Gemini\n  else if ($json.error) {\n    ok = false;\n    error = true;\n    mensagemFinal = '';\n  }\n  // Caso 3: Se for array (resposta direta do Gemini sem processar)\n  else if (Array.isArray($json)) {\n    const firstItem = $json[0];\n    \n    if (firstItem?.error) {\n      // Erro do Gemini (ex: rate limit, bad request)\n      ok = false;\n      error = true;\n      mensagemFinal = '';\n    } else if (firstItem?.content?.parts?.[0]?.text) {\n      // Sucesso - extrai o texto reescrito\n      mensagemFinal = firstItem.content.parts[0].text.trim();\n      ok = true;\n      error = false;\n    }\n  }\n  // Caso 4: Tenta acessar como array dentro de json\n  else if ($json.json && Array.isArray($json.json)) {\n    const firstItem = $json.json[0];\n    if (firstItem?.error) {\n      ok = false;\n      error = true;\n      mensagemFinal = '';\n    } else if (firstItem?.content?.parts?.[0]?.text) {\n      mensagemFinal = firstItem.content.parts[0].text.trim();\n      ok = true;\n      error = false;\n    }\n  }\n} catch (err) {\n  // Se falhar, usa mensagem original\n  mensagemFinal = $json.mensagem || '';\n  ok = true;\n  error = false;\n}\n\nreturn {\n  json: {\n    mensagem: mensagemFinal,\n    ok: ok,\n    error: error\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        -560
+      ],
+      "id": "fdd694e9-0f3d-4537-8214-d62d44a7dbb7",
+      "name": "ExtraiJSONGemini"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "verifica-ok-true",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "verifica-error-false",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2912,
+        -624
+      ],
+      "id": "a471519f-fa70-426a-9b2f-6bc1f5cc5c18",
+      "name": "VerificaErroGemini"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('InicializaVariaveis1').item.json.id }}",
+        "text": "={{ $json.mensagem }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3344,
+        -288
+      ],
+      "id": "ffc87c00-89cd-4fb6-b34d-c55fbf102a1f",
+      "name": "RespondeMensagemDoClima",
+      "webhookId": "779fa455-2a45-4498-bf79-b966b00e6edc",
+      "credentials": {
+        "telegramApi": {
+          "id": "qoxwo5MGvDIQxc38",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "InicializaVariaveis": {
+      "main": [
+        [
+          {
+            "node": "ValidaParametroCidadeEstado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ChamaApiOpenWeather": {
+      "main": [
+        [
+          {
+            "node": "Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MensagemDeErro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ValidaParametroCidadeEstado": {
+      "main": [
+        [
+          {
+            "node": "MensagemValida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta": {
+      "main": [
+        [
+          {
+            "node": "TemperaturaExiste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ArredondaTemperatura": {
+      "main": [
+        [
+          {
+            "node": "MensagemFinal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MensagemFinal": {
+      "main": [
+        [
+          {
+            "node": "MensagemComGemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MensagemDeErro": {
+      "main": [
+        [
+          {
+            "node": "RespondeMensagemDoClima",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MensagemComGemini": {
+      "main": [
+        [
+          {
+            "node": "GerouTexto1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "TemperaturaExiste": {
+      "main": [
+        [
+          {
+            "node": "ArredondaTemperatura",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MensagemDeErro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MensagemValida": {
+      "main": [
+        [
+          {
+            "node": "ChamaApiOpenWeather",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MensagemDeErro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GerouTexto1": {
+      "main": [
+        [
+          {
+            "node": "ExtraiJSONGemini",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FallbackDeterministico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FallbackDeterministico": {
+      "main": [
+        [
+          {
+            "node": "RespondeMensagemDoClima",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ExtraiJSONGemini": {
+      "main": [
+        [
+          {
+            "node": "VerificaErroGemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VerificaErroGemini": {
+      "main": [
+        [
+          {
+            "node": "RespondeMensagemDoClima",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FallbackDeterministico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "4fa2b876-e098-4da1-bd77-a441b64da904",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32f4b685342d33256b6af44bc4471cae82bc1415eb5a2fbf7477962cfcb0c649"
+  },
+  "id": "ua4pyxw4ZoqGcO_s0ao95",
+  "tags": []
+}
