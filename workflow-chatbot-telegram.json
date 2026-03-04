@@ -1,5 +1,5 @@
 {
-  "name": "BotClima",
+  "name": "BotClimaRecover",
   "nodes": [
     {
       "parameters": {
@@ -174,11 +174,11 @@
       "parameters": {
         "content": "## Entrada e validação de cidade e estado",
         "height": 496,
-        "width": 944
+        "width": 1216
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -368,
+        -640,
         -480
       ],
       "typeVersion": 1,
@@ -401,13 +401,13 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Fallback determinístico - gera mensagem sem depender do Gemini\n// A automação avaliadora usará este fallback quando não houver credenciais Gemini\nconst nomeCidade = $json.nomeCidade || $('ArredondaTemperatura1').item.json.nomeCidade;\nconst temperatura = $json.temperatura || $('ArredondaTemperatura1').item.json.temperatura;\n\n// Gera mensagem formatada de forma determinística\nconst mensagem = `🌤️ A temperatura em ${nomeCidade} é de ${temperatura}°C.`;\n\nreturn {\n  json: {\n    mensagem: mensagem,\n    ok: true\n  }\n};"
+        "jsCode": "// Fallback determinístico - gera mensagem sem depender do Gemini\n// A automação avaliadora usará este fallback quando não houver credenciais Gemini\nconst nomeCidade = $json.nomeCidade || $('ArredondaTemperatura').item.json.nomeCidade;\nconst temperatura = $json.temperatura || $('ArredondaTemperatura').item.json.temperatura;\n\n// Gera mensagem formatada de forma determinística\nconst mensagem = `🌤️ A temperatura em ${nomeCidade} é de ${temperatura}°C.`;\n\nreturn {\n  json: {\n    mensagem: mensagem,\n    ok: true\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2816,
-        -400
+        2944,
+        -368
       ],
       "id": "3b50480a-b373-423a-bc74-7b876217563e",
       "name": "FallbackDeterministico"
@@ -421,7 +421,7 @@
       "typeVersion": 2,
       "position": [
         2688,
-        -560
+        -624
       ],
       "id": "fdd694e9-0f3d-4537-8214-d62d44a7dbb7",
       "name": "ExtraiJSONGemini"
@@ -464,15 +464,15 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2912,
-        -624
+        2896,
+        -656
       ],
       "id": "a471519f-fa70-426a-9b2f-6bc1f5cc5c18",
       "name": "VerificaErroGemini"
     },
     {
       "parameters": {
-        "chatId": "={{ $('InicializaVariaveis1').item.json.id }}",
+        "chatId": "={{ $('InicializaVariaveis').item.json.id }}",
         "text": "={{ $json.mensagem }}",
         "additionalFields": {}
       },
@@ -491,9 +491,58 @@
           "name": "TELEGRAM_BOT_TOKEN"
         }
       }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -544,
+        -304
+      ],
+      "id": "170b0665-c816-4a0d-84ce-e42d021528e5",
+      "name": "DisparaGatilhoTelegram",
+      "webhookId": "fa8b1af4-239a-45a2-bd62-b9a693dddae0",
+      "credentials": {
+        "telegramApi": {
+          "id": "qoxwo5MGvDIQxc38",
+          "name": "TELEGRAM_BOT_TOKEN"
+        }
+      }
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "DisparaGatilhoTelegram": [
+      {
+        "json": {
+          "update_id": 312786564,
+          "message": {
+            "message_id": 64,
+            "from": {
+              "id": 8239552260,
+              "is_bot": false,
+              "first_name": "Kelvis",
+              "last_name": "Borges",
+              "language_code": "pt-br"
+            },
+            "chat": {
+              "id": 8239552260,
+              "first_name": "Kelvis",
+              "last_name": "Borges",
+              "type": "private"
+            },
+            "date": 1771646616,
+            "text": "Campo Grande, MS"
+          }
+        }
+      }
+    ]
+  },
   "connections": {
     "InicializaVariaveis": {
       "main": [
@@ -684,6 +733,17 @@
           }
         ]
       ]
+    },
+    "DisparaGatilhoTelegram": {
+      "main": [
+        [
+          {
+            "node": "InicializaVariaveis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -691,11 +751,11 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "4fa2b876-e098-4da1-bd77-a441b64da904",
+  "versionId": "0b93537f-f278-4957-872d-f08cc36648c7",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "32f4b685342d33256b6af44bc4471cae82bc1415eb5a2fbf7477962cfcb0c649"
   },
   "id": "ua4pyxw4ZoqGcO_s0ao95",
   "tags": []
-}
+} 
